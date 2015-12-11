@@ -48,20 +48,20 @@
             window.swaggerUi = new SwaggerUi(swaggerOptions);
 
             {{#if authorization}}
-                var addApiKeyAuthorization = function() {
-                    var key = $('#input_apiKey:first').val();
-
-                    if (key && key.trim() != "") {
-                        var field = '{{authorization.field}}';
-                        var scope = '{{authorization.scope}}';
-                        key = {{#if authorization.valuePrefix}}'{{authorization.valuePrefix}}' + {{/if}} key;
-                        window.swaggerUi.api.clientAuthorizations.add("api_key", new SwaggerClient.ApiKeyAuthorization(field, key, scope));
-                    } else {
-                        window.swaggerUi.api.clientAuthorizations.remove("api_key");
-                    }
+                var addApiKeyAuthorizations = function(e) {
+                  var elem = $(e.target)[0];
+                  var key = $(elem).val();
+                  if (key && key.trim() !== "") {
+                    var field = $(elem).attr('data-auth-field');
+                    var scope = $(elem).attr('data-auth-scope');
+                    key = $(elem).attr('data-value-prefix') || '' + key;
+                    window.swaggerUi.api.clientAuthorizations.add(field, new SwaggerClient.ApiKeyAuthorization(field, key, scope));
+                  } else {
+                    window.swaggerUi.api.clientAuthorizations.remove(field);
+                  }
                 };
 
-                $('#input_apiKey').change(addApiKeyAuthorization);
+                $('.apiKeyAuthorization').change(addApiKeyAuthorizations);
             {{/if}}
 
             window.swaggerUi.load();
@@ -83,8 +83,15 @@
                                                             name="baseUrl" type="text"/></div>
 
             <div class="input">
-                <input placeholder="{{#if authorization.placeholder}}{{authorization.placeholder}}{{else}}{{authorization.field}}{{/if}}"
-                       id="input_apiKey" name="apiKey" type="text"/>
+              <!-- loop the array of api keys, instead of having just one and using a placeholder -->
+              {{#each authorization}}
+              <input placeholder="{{#if this.placeholder}}{{this.placeholder}}{{else}}{{this.field}}{{/if}}"
+                id="input_apiKey[{{#if this.placeholder}}{{this.placeholder}}{{else}}{{this.field}}{{/if}}]"
+                class="apiKeyAuthorization" name="{{this.field}}" type="text" data-auth-field="{{this.field}}"
+                data-auth-scope="{{this.scope}}" data-value-prefix="{{this.valuePrefix}}" value=""/>
+              {{/each}}
+                <!-- <input placeholder="{{#if authorization.placeholder}}{{authorization.placeholder}}{{else}}{{authorization.field}}{{/if}}"
+                       id="input_apiKey" name="apiKey" type="text"/> -->
             </div>
             <div class="input"><a id="explore" href="#">Explore</a></div>
         </form>
