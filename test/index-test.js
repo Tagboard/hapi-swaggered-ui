@@ -1,70 +1,62 @@
-var Hapi = require('hapi')
-var Code = require('code')
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
-var inert = require('inert')
-var vision = require('vision')
+'use strict'
 
-var describe = lab.describe
-var it = lab.it
-// var before = lab.before
-// var after = lab.after
-var expect = Code.expect
+const Hapi = require('hapi')
+const Code = require('code')
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
+const inert = require('inert')
+const vision = require('vision')
+const plugin = require('../')
 
-describe('index', function () {
-  describe('without prefix', function () {
-    var server
+const describe = lab.describe
+const it = lab.it
+const expect = Code.expect
 
-    lab.before(function (done) {
-      server = new Hapi.Server()
-      server.connection({port: 0})
-      server.register([vision, inert, {
-        register: require('../'),
+describe('index', () => {
+  describe('without prefix', () => {
+    let server
+
+    lab.before(async () => {
+      server = Hapi.Server({ port: 0 })
+
+      await expect(server.register([vision, inert, {
+        plugin,
         options: {
           swaggerEndpoint: 'http://test.url.tld/swagger'
         }
-      }], function (err) {
-        expect(err).to.not.exist()
-        server.start(function () {
-          done()
-        })
-      })
+      }])).not.to.reject()
     })
 
-    lab.after(function (done) {
-      server.stop({}, function () {
-        server = null
-        done()
-      })
+    lab.after(async () => {
+      await server.stop({})
+      server = null
     })
 
-    it('Path /', function (done) {
-      server.inject('/', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('Path /', async () => {
+      const res = await server.inject('/')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
 
-    it('/index.html', function (done) {
-      server.inject('/index.html', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('/index.html', async () => {
+      const res = await server.inject('/')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
   })
 
-  describe('with prefix', function () {
-    var server
+  describe('with prefix', () => {
+    let server
 
-    lab.before(function (done) {
-      server = new Hapi.Server()
-      server.connection({port: 0})
-      server.register([vision, inert, {
-        register: require('../'),
+    lab.before(async () => {
+      server = Hapi.Server({ port: 0 })
+
+      await server.register([vision, inert, {
+        plugin,
         options: {
           swaggerEndpoint: 'http://test.url.tld/swagger'
         }
@@ -72,55 +64,47 @@ describe('index', function () {
         routes: {
           prefix: '/docs'
         }
-      }, function (err) {
-        expect(err).to.not.exist()
-        server.start(function () {
-          done()
-        })
       })
+
+      await server.start()
     })
 
-    lab.after(function (done) {
-      server.stop({}, function () {
-        server = null
-        done()
-      })
+    lab.after(async () => {
+      await server.stop({})
+      server = null
     })
 
-    it('Path /docs', function (done) {
-      server.inject('/docs', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('Path /docs', async () => {
+      const res = await server.inject('/docs')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
 
-    it('Path /docs/', function (done) {
-      server.inject('/docs/', function (res) {
-        expect(res.statusCode).to.equal(404)
-        done()
-      })
+    it('Path /docs/', async () => {
+      const res = await server.inject('/docs/')
+
+      expect(res.statusCode).to.equal(404)
     })
 
-    it('/docs/index.html', function (done) {
-      server.inject('/docs/index.html', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('/docs/index.html', async () => {
+      const res = await server.inject('/docs/index.html')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
   })
 
-  describe('with prefix and stripTrailingSlash', function () {
-    var server
+  describe('with prefix and stripTrailingSlash', () => {
+    let server
 
-    lab.before(function (done) {
-      server = new Hapi.Server()
-      server.connection({port: 0, router: { stripTrailingSlash: true }})
-      server.register([vision, inert, {
-        register: require('../'),
+    lab.before(async () => {
+      server = Hapi.Server({ port: 0, router: { stripTrailingSlash: true } })
+
+      await server.register([vision, inert, {
+        plugin,
         options: {
           swaggerEndpoint: 'http://test.url.tld/swagger'
         }
@@ -128,46 +112,38 @@ describe('index', function () {
         routes: {
           prefix: '/docs'
         }
-      }, function (err) {
-        expect(err).to.not.exist()
-        server.start(function () {
-          done()
-        })
       })
+
+      await server.start()
     })
 
-    lab.after(function (done) {
-      server.stop({}, function () {
-        server = null
-        done()
-      })
+    lab.after(async () => {
+      await server.stop({})
+      server = null
     })
 
-    it('Path /docs', function (done) {
-      server.inject('/docs', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('Path /docs', async () => {
+      const res = await server.inject('/docs')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
 
-    it('Path /docs/', function (done) {
-      server.inject('/docs/', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('Path /docs/', async () => {
+      const res = await server.inject('/docs/')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
 
-    it('/docs/index.html', function (done) {
-      server.inject('/docs/index.html', function (res) {
-        expect(res.statusCode).to.equal(200)
-        expect(res.result).to.contain('swagger-ui.min.js')
-        expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
-        done()
-      })
+    it('/docs/index.html', async () => {
+      const res = await server.inject('/docs/index.html')
+
+      expect(res.statusCode).to.equal(200)
+      expect(res.result).to.contain('/swagger-ui-bundle.js')
+      expect(res.result).to.contain('"url":"http://test.url.tld/swagger"')
     })
   })
 })

@@ -1,24 +1,19 @@
-var Hapi = require('hapi')
-var Code = require('code')
-var Lab = require('lab')
-var lab = exports.lab = Lab.script()
+'use strict'
 
-var describe = lab.describe
-var it = lab.it
-// var before = lab.before
-// var after = lab.after
-var expect = Code.expect
+const Hapi = require('hapi')
+const Code = require('code')
+const Lab = require('lab')
+const lab = exports.lab = Lab.script()
 
-describe('init', function () {
-  it('register', function (done) {
-    var server = new Hapi.Server()
-    server.connection({port: 80})
+const describe = lab.describe
+const it = lab.it
+const expect = Code.expect
 
-    server.register([require('vision'), require('inert'), {
-      register: require('../')
-    }], function (err) {
-      expect(err).to.not.exist()
-      done()
-    })
+describe('init', () => {
+  it('register', async () => {
+    const server = Hapi.Server({ port: 80 })
+    const plugins = [require('vision'), require('inert'), require('../')]
+
+    await expect(server.register(plugins)).not.to.reject()
   })
 })
