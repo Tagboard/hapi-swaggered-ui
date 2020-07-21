@@ -21,7 +21,7 @@
     "@hapi/inert": "6.0.1",
     "@hapi/joi": "17.0.2",
     "lodash": "4.17.19",
-    "swagger-ui-dist": "3.30.1",
+    "swagger-ui-dist": "3.26.2",
     "@hapi/vision": "6.0.0"
   },
   "devDependencies": {
